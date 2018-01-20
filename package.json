@@ -15,7 +15,7 @@
 		"type": "git",
 		"url": "https://github.com/phiresky/typed-socket.io"
 	},
-	"files": ["bin", "LICENSE"],
+	"files": ["LICENSE"],
 	"lint-staged": {
 		"*.{json,ts,tsx,js,jsx}": ["prettier --write", "git add"]
 	},
