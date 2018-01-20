@@ -84,8 +84,8 @@ The only thing you need to glue this together is a file that is imported on the 
 * common.ts
 
 ```ts
-import { ServerDefinition, SimpleNamespace, ServerNamespace,
-    RootServer, ClientSideSocket } from "typed-socket.io";
+import { ServerDefinition, SimpleNamespace,
+         RootServer, ClientSideSocket } from "typed-socket.io";
 
 type ChatMessage = {
     sender: string;

@@ -1,7 +1,6 @@
 import {
     ServerDefinition,
     SimpleNamespace,
-    ServerNamespace,
     RootServer,
     ClientSideSocket,
 } from "../..";
