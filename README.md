@@ -1,6 +1,8 @@
 # typed-socket.io
 
-A library for fully typed client-server communication with socket.io and TypeScript
+A library for fully typed client-server communication with socket.io and TypeScript.
+
+Install via npm: [typed-socket.io](https://www.npmjs.com/package/typed-socket.io)
 
 ## Basic Usage (purely compile-time)
 
