@@ -1,6 +1,6 @@
 {
     "name": "typed-socket.io",
-    "version": "0.2.1",
+    "version": "0.2.2",
     "description":
         "A library for fully typed client-server communication with socket.io and TypeScript",
     "main": "index.js",
@@ -15,7 +15,6 @@
         "type": "git",
         "url": "https://github.com/phiresky/typed-socket.io"
     },
-    "files": ["LICENSE"],
     "lint-staged": {
         "*.{json,ts,tsx,js,jsx}": ["prettier --write", "git add"]
     },
