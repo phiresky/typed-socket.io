@@ -4,6 +4,8 @@ A library for fully typed client-server communication with socket.io and TypeScr
 
 Install via npm: [typed-socket.io](https://www.npmjs.com/package/typed-socket.io)
 
+Source code on GitHub: [phiresky/typed-socket.io](https://github.com/phiresky/typed-socket.io)
+
 ## Basic Usage (purely compile-time)
 
 Simple Example:

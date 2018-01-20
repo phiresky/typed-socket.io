@@ -2,7 +2,7 @@ import { TypedChatClient } from "./common";
 
 import * as io from "socket.io-client";
 
-const host = "http://localhost:8000";
+const host = process.argv[2] || "http://localhost:8000";
 const ns = "/chat";
 const client: TypedChatClient = io(host + ns) as any;
 
@@ -17,14 +17,14 @@ client.on("chatMessage", ({ sender, message, channel }) => {
 client.emit(
     "postMessage",
     { message: "Hello World", channel: "en" },
-    (error, response) => {
+    (error, _response) => {
         if (error) return console.error(error);
-        // assert typeof response === "ok" here
+        // assert typeof _response === "ok" here
     },
 );
 
-client.emit("postMessage", { message: "Hello World", channel: "es" }, () => {});
-/*                                      ▲
+/* client.emit("postMessage", { message: "Hello World", channel: "es" }, () => {});
+                                        ▲
               ┏━━━━━━━━━━━━━━━━━━━━━━━━━┻━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
               ┃ [ts] Type '"es"' is not assignable to type '"en" | "ru"'. ┃
               ┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛ */

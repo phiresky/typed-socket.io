@@ -3,9 +3,9 @@ import {
     SimpleNamespace,
     RootServer,
     ClientSideSocket,
-} from "../..";
+} from "../../typedSocket";
 
-type ChatMessage = {
+export type ChatMessage = {
     sender: string;
     message: string;
     channel: "en" | "ru";
