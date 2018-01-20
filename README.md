@@ -8,6 +8,10 @@ Install via npm: [typed-socket.io](https://www.npmjs.com/package/typed-socket.io
 
 Simple Example:
 
+Let's say you want to have a simple chat server, where users can connect and send messages to an english and a russian channel, and all received messages will be forwarded to all other connected users.
+
+Using this library, you can do this with both the server and the client having 100% type safety. Here's how it looks:
+
 * server.ts
 
 ```ts
