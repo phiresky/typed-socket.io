@@ -180,6 +180,14 @@ interface ServerNamespaceNSI<
     close(): void;
 
     server: RootServer<D>;
+    use(
+        fn: (
+            socket: ServerSideClientSocketNS<D, N>,
+            fn: (err?: any) => void,
+        ) => void,
+    ): this;
+
+    sockets: { [id: string]: ServerSideClientSocketNS<D, N> | undefined };
 }
 
 export type ClientSideSocketNS<N extends NamespaceSchema> = ClientSideSocketI<
@@ -243,4 +251,5 @@ interface ServerSideClientSocketI<
 
 export interface RootServer<D extends ServerDefinition> {
     of<K extends NamespaceNames<D>>(ns: K): ServerNamespace<D, K>;
+    adapter(v: any): this;
 }

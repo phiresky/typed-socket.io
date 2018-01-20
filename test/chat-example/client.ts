@@ -24,7 +24,9 @@ client.emit(
 );
 
 client.emit("postMessage", { message: "Hello World", channel: "es" }, () => {});
-/*                                        ▲
+/*                                      ▲
               ┏━━━━━━━━━━━━━━━━━━━━━━━━━┻━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
               ┃ [ts] Type '"es"' is not assignable to type '"en" | "ru"'. ┃
               ┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛ */
+
+client.on("error", e => console.error("socket.io error", e));
