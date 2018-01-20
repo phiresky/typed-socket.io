@@ -32,11 +32,11 @@ chatServer.on("connection", client => {
     });
 
     /* client.emit("otherMessage", 123);
-	               ▲
-	          ┏━━━━┻━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
-	          ┃ [ts] Argument of type '"otherMessage"' is not assignable  ┃
-	          ┃      to parameter of type '"chatMessage"'.                ┃
-	          ┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛ */
+                   ▲
+              ┏━━━━┻━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
+              ┃ [ts] Argument of type '"otherMessage"' is not assignable  ┃
+              ┃      to parameter of type '"chatMessage"'.                ┃
+              ┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛ */
 });
 ```
 
@@ -67,9 +67,9 @@ client.emit(
 );
 
 client.emit("postMessage", { message: "Hello World", channel: "es" }, () => {});
-/*	                                    ▲
-	          ┏━━━━━━━━━━━━━━━━━━━━━━━━━┻━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
-	          ┃ [ts] Type '"es"' is not assignable to type '"en" | "ru"'. ┃
+/*                                        ▲
+              ┏━━━━━━━━━━━━━━━━━━━━━━━━━┻━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
+              ┃ [ts] Type '"es"' is not assignable to type '"en" | "ru"'. ┃
               ┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛ */
 ```
 

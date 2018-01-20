@@ -22,9 +22,9 @@ chatServer.on("connection", client => {
     });
 
     /* client.emit("otherMessage", 123);
-	               ▲
-	          ┏━━━━┻━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
-	          ┃ [ts] Argument of type '"otherMessage"' is not assignable  ┃
-	          ┃      to parameter of type '"chatMessage" | "history"'.    ┃
-	          ┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛ */
+                   ▲
+              ┏━━━━┻━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
+              ┃ [ts] Argument of type '"otherMessage"' is not assignable  ┃
+              ┃      to parameter of type '"chatMessage" | "history"'.    ┃
+              ┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛ */
 });
