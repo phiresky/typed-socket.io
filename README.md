@@ -23,7 +23,7 @@ const server = io(8000) as TypedServer;
 const chatServer = server.of("/chat");
 
 chatServer.on("connection", client => {
-    client.on("postMessage", info => {
+    client.on("postMessage", (info, callback) => {
         // typeof info.message === string
         // typeof info.channel === "en" | "ru"
         chatServer.emit("chatMessage", {
@@ -37,6 +37,7 @@ chatServer.on("connection", client => {
           ┃ '{ sender: string; message: string; channel: "en" | "ru"; }'. ┃
           ┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛ */
         });
+        callback(null, "ok");
     });
 
     /* client.emit("otherMessage", 123);
