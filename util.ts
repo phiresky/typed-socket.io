@@ -1,4 +1,4 @@
-import { ClientSideSocket } from "./typedSocket";
+import { ClientSideSocket, ServerSideClientSocket } from "./typedSocket";
 
 export type mixed =
     | string
@@ -13,13 +13,43 @@ export type mixed =
 /**
  * promisify the emit function for RPC calls
  */
-export function promisifySocket(socket: ClientSideSocket<any, any>) {
+export function promisifySocket(
+    socket: ClientSideSocket<any, any> | ServerSideClientSocket<any, any>,
+) {
     socket.emitAsync = function(type: string, ...args: any[]) {
         return new Promise((resolve, reject) => {
             (socket as any).emit(type, ...args, (err: any, res: any) => {
                 if (err) reject(err);
                 else resolve(res);
             });
+        });
+    };
+    socket.onAsync = function(
+        event: string,
+        callback: (...args: any[]) => Promise<any>,
+    ) {
+        this.on(event, async (...args: any[]) => {
+            if (
+                args.length === 0 ||
+                typeof args[args.length - 1] !== "function"
+            ) {
+                console.error(
+                    `invalid callback: ${socket.id} called`,
+                    event,
+                    "with args",
+                    args,
+                );
+            } else {
+                const clientCallback = args[args.length - 1];
+                try {
+                    clientCallback(
+                        null,
+                        await callback(...args.slice(0, args.length - 1)),
+                    );
+                } catch (e) {
+                    clientCallback(e);
+                }
+            }
         });
     };
 }

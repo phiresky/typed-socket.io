@@ -128,6 +128,30 @@ A runnable version of this example is in [test/chat-example](test/chat-example).
 
 Note that when using this library this way, the types are only checked at compile-time, which means that you trust your clients to send the correct data at runtime.
 
+### Promises
+
+For all RPCs, you can also use promises via `.onAsync` instead of `.on` on the server and and `.emitAsync` instead of `.emit` on the client, by calling `promisifySocket(client)` from [typed-socket.io/util](./util.ts).
+
+```ts
+// server
+chatServer.on("connection", client => {
+    client.on("postMessage", async info => {
+        chatServer.emit("chatMessage", {
+            ...info,
+            sender: client.id,
+        });
+        return "ok"; // must return "ok" here (or throw).
+    });
+});
+
+// client
+const response = await client.emitAsync(
+    "postMessage",
+    { message: "Hello World", channel: "en" }
+);
+// assert response === "ok"
+```
+
 ## Runtime Component
 
 If you want runtime type safety, you can use the following classes:
