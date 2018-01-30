@@ -140,7 +140,7 @@ chatServer.on("connection", client => {
             ...info,
             sender: client.id,
         });
-        return "ok"; // must return "ok" here (or throw).
+        return "ok"; // must return "ok" here (or throw), because thats what the ServerDefinition says.
     });
 });
 

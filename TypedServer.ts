@@ -7,15 +7,27 @@ import * as ts from "./typedSocket";
 import { isLeft } from "fp-ts/lib/Either";
 import { PathReporter } from "io-ts/lib/PathReporter";
 import { ServerDefinition } from "./typedSocket";
-export type RuntimeNamespaceSchema = {
-    ServerMessages: { [name: string]: t.Type<any, any> };
-    ClientMessages: { [name: string]: t.Type<any, any> };
-    ClientRPCs: {
-        [name: string]: {
-            request: t.Type<any, any>;
-            response: t.Type<any, any>;
-        };
+
+/** use this for calls with no arguments */
+export const empty = t.union([t.undefined, t.null]);
+export type empty = undefined | null;
+
+export interface RuntimeClientRPCStructure {
+    [name: string]: {
+        request: t.Type<any, any>;
+        response: t.Type<any, any>;
     };
+}
+export interface RuntimeClientMessagesStructure {
+    [name: string]: t.Type<any, any>;
+}
+export interface RuntimeServerMessagesStructure {
+    [name: string]: t.Type<any, any>;
+}
+export type RuntimeNamespaceSchema = {
+    ServerMessages: RuntimeServerMessagesStructure;
+    ClientMessages: RuntimeClientMessagesStructure;
+    ClientRPCs: RuntimeClientRPCStructure;
 };
 
 export type NeededInfo<
@@ -54,7 +66,7 @@ export type FromCompiletime<S extends ts.NamespaceSchema> = {
         [k in keyof S["ClientRPCs"]]: {
             request: t.Type<any, S["ClientRPCs"][k]["request"]>;
             response: t.Type<any, S["ClientRPCs"][k]["response"]>;
-            error: t.Type<any, any>;
+            // error: t.Type<any, any>;
         }
     };
 };
@@ -82,6 +94,14 @@ export type IClientSocketHandler<N extends NeededInfo> = {
 } & internal.ClientMessagesHandler<N["NamespaceSchema"]> &
     internal.ClientRPCsHandler<N["NamespaceSchema"]>;
 
+export type IPartialClientSocketHandler<N extends NeededInfo> = {
+    io: ts.ServerNamespaceNS<N["ServerDefinition"], N["NamespaceSchema"]>;
+    socket: ts.ServerSideClientSocketNS<
+        N["ServerDefinition"],
+        N["NamespaceSchema"]
+    >;
+} & Partial<internal.ClientMessagesHandler<N["NamespaceSchema"]>> &
+    Partial<internal.ClientRPCsHandler<N["NamespaceSchema"]>>;
 /**
  * Usage: MyClass extends ClientSocketHandler<X> implements IClientSocketHandler<X> {...}
  */
@@ -102,7 +122,10 @@ export class ClientSocketHandler<N extends NeededInfo> {
  * extend this class to create a typed socket.io server
  */
 export abstract class Server<N extends NeededInfo> {
-    constructor(readonly schema: N["RuntimeSchema"]) {}
+    constructor(
+        readonly schema: N["RuntimeSchema"],
+        private readonly __config = { allowMissingHandlers: false },
+    ) {}
     listen(
         io: ts.ServerNamespaceNS<N["ServerDefinition"], N["NamespaceSchema"]>,
     ) {
@@ -114,6 +137,11 @@ export abstract class Server<N extends NeededInfo> {
                 return;
             }
             for (const clientMessage in schema.ClientMessages) {
+                if (typeof handler[clientMessage] !== "function") {
+                    if (!this.__config.allowMissingHandlers)
+                        console.warn("No handler for " + clientMessage);
+                    continue;
+                }
                 socket.on(clientMessage, (...args: any[]) =>
                     this.safeHandleClientMessage(
                         handler,
@@ -124,6 +152,11 @@ export abstract class Server<N extends NeededInfo> {
                 );
             }
             for (const clientRPC in schema.ClientRPCs) {
+                if (typeof handler[clientRPC] !== "function") {
+                    if (!this.__config.allowMissingHandlers)
+                        console.warn("No handler for " + clientRPC);
+                    continue;
+                }
                 socket.on(clientRPC, (...args: any[]) =>
                     this.safeHandleClientRPC(
                         handler,
@@ -144,28 +177,41 @@ export abstract class Server<N extends NeededInfo> {
             N["ServerDefinition"],
             N["NamespaceSchema"]
         >,
-    ): IClientSocketHandler<N> | null;
+    ): IPartialClientSocketHandler<N> | null;
 
-    abstract onClientTypeError(
+    abstract onClientMessageTypeError(
         socket: ts.ServerSideClientSocketNS<
             N["ServerDefinition"],
             N["NamespaceSchema"]
         >,
+        message: string,
         e: string,
     ): void;
+    /** return what should be sent as the callback error */
+    onClientRPCTypeError(
+        socket: ts.ServerSideClientSocketNS<
+            N["ServerDefinition"],
+            N["NamespaceSchema"]
+        >,
+        message: string,
+        e: string,
+    ): any {
+        return e;
+    }
 
     private safeHandleClientMessage<
         K extends keyof N["NamespaceSchema"]["ClientMessages"]
     >(
-        handler: IClientSocketHandler<N>,
+        handler: IPartialClientSocketHandler<N>,
         message: K,
         args: any[],
         schema: t.Type<any, any>,
     ) {
         if (args.length !== 1) {
-            this.onClientTypeError(
+            this.onClientMessageTypeError(
                 handler.socket,
-                "Invalid arguments l " + args.length,
+                message,
+                `Invalid argument: passed ${args.length}, expected 1`,
             );
             return;
         }
@@ -173,8 +219,11 @@ export abstract class Server<N extends NeededInfo> {
         const validation = t.validate(arg, schema);
         if (isLeft(validation)) {
             const error = PathReporter.report(validation).join("\n");
-            console.error(handler.socket.id, message, error);
-            this.onClientTypeError(handler.socket, message + ": Type Error");
+            this.onClientMessageTypeError(
+                handler.socket,
+                message,
+                "Type Error: " + error,
+            );
             return;
         }
         const safeArg = validation.value;
@@ -186,35 +235,42 @@ export abstract class Server<N extends NeededInfo> {
         }
     }
     private async safeHandleClientRPC(
-        handler: IClientSocketHandler<N>,
+        handler: IPartialClientSocketHandler<N>,
         message: keyof N["NamespaceSchema"]["ClientRPCs"],
         args: any[],
         schema: t.Type<any, any>,
     ) {
         if (args.length !== 2) {
-            this.onClientTypeError(
+            this.onClientRPCTypeError(
                 handler.socket,
-                "Invalid arguments l " + args.length,
+                message,
+                `Invalid arguments: passed ${
+                    args.length
+                }, expected (argument, callback)`,
             );
             return;
         }
         const [arg, cb] = args;
         if (typeof cb !== "function") {
-            this.onClientTypeError(handler.socket, message + ": No callback");
+            this.onClientRPCTypeError(handler.socket, message, "No callback");
             return;
         }
         const validation = t.validate(arg, schema);
         if (isLeft(validation)) {
             const error = PathReporter.report(validation).join("\n");
-            console.error(handler.socket.id, message, error);
-            cb(message + ": Type Error");
+            cb(
+                this.onClientRPCTypeError(
+                    handler.socket,
+                    message,
+                    "Type Error: " + error,
+                ),
+            );
             return;
         }
         const safeArg = validation.value;
         try {
             cb(null, await (handler[message] as any)(safeArg));
         } catch (e) {
-            console.log(handler.socket.id, message, e);
             cb(e);
         }
     }

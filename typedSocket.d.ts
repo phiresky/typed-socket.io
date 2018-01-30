@@ -1,4 +1,4 @@
-interface ClientRPCStructure {
+export interface ClientRPCStructure {
     [name: string]: {
         request: any;
         response: any;
