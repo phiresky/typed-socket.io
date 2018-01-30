@@ -118,14 +118,27 @@ export class ClientSocketHandler<N extends NeededInfo> {
     ) {}
 }
 
+export interface ServerConfig {
+    /** allow the client socket handler to ignore some client messages */
+    allowMissingHandlers: boolean;
+    /** for RPCs, we usually send type errors back as the first callback argument. When the callback is missing, this logs the error instead */
+    logUnsendableErrors: boolean;
+}
+const defaultServerConfig: ServerConfig = {
+    allowMissingHandlers: false,
+    logUnsendableErrors: true,
+};
 /**
  * extend this class to create a typed socket.io server
  */
 export abstract class Server<N extends NeededInfo> {
+    private readonly __config: ServerConfig;
     constructor(
         readonly schema: N["RuntimeSchema"],
-        private readonly __config = { allowMissingHandlers: false },
-    ) {}
+        config: Partial<ServerConfig> = {},
+    ) {
+        this.__config = Object.assign({}, defaultServerConfig, config);
+    }
     listen(
         io: ts.ServerNamespaceNS<N["ServerDefinition"], N["NamespaceSchema"]>,
     ) {
@@ -179,24 +192,26 @@ export abstract class Server<N extends NeededInfo> {
         >,
     ): IPartialClientSocketHandler<N> | null;
 
-    abstract onClientMessageTypeError(
+    onClientMessageTypeError(
         socket: ts.ServerSideClientSocketNS<
             N["ServerDefinition"],
             N["NamespaceSchema"]
         >,
         message: string,
-        e: string,
-    ): void;
-    /** return what should be sent as the callback error */
+        error: string,
+    ): void {
+        console.error(socket.id + ": " + message + ": " + error);
+    }
+    /** return what should be sent as the callback error. override this to customize. By default, the error message will be returned */
     onClientRPCTypeError(
-        socket: ts.ServerSideClientSocketNS<
+        _socket: ts.ServerSideClientSocketNS<
             N["ServerDefinition"],
             N["NamespaceSchema"]
         >,
         message: string,
-        e: string,
+        error: string,
     ): any {
-        return e;
+        return message + ": " + error;
     }
 
     private safeHandleClientMessage<
@@ -241,18 +256,24 @@ export abstract class Server<N extends NeededInfo> {
         schema: t.Type<any, any>,
     ) {
         if (args.length !== 2) {
-            this.onClientRPCTypeError(
+            const msg = this.onClientRPCTypeError(
                 handler.socket,
                 message,
                 `Invalid arguments: passed ${
                     args.length
                 }, expected (argument, callback)`,
             );
+            if (this.__config.logUnsendableErrors) console.error(msg);
             return;
         }
         const [arg, cb] = args;
         if (typeof cb !== "function") {
-            this.onClientRPCTypeError(handler.socket, message, "No callback");
+            const msg = this.onClientRPCTypeError(
+                handler.socket,
+                message,
+                "No callback",
+            );
+            if (this.__config.logUnsendableErrors) console.error(msg);
             return;
         }
         const validation = t.validate(arg, schema);
