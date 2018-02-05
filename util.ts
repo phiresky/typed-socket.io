@@ -15,6 +15,7 @@ export type mixed =
  */
 export function promisifySocket(
     socket: ClientSideSocket<any, any> | ServerSideClientSocket<any, any>,
+    options?: { mapErrors?: (e: any) => any },
 ) {
     socket.emitAsync = function(type: string, ...args: any[]) {
         return new Promise((resolve, reject) => {
@@ -28,7 +29,7 @@ export function promisifySocket(
         event: string,
         callback: (...args: any[]) => Promise<any>,
     ) {
-        this.on(event, async (...args: any[]) => {
+        this.on(event, (...args: any[]) => {
             if (
                 args.length === 0 ||
                 typeof args[args.length - 1] !== "function"
@@ -41,14 +42,15 @@ export function promisifySocket(
                 );
             } else {
                 const clientCallback = args[args.length - 1];
-                try {
-                    clientCallback(
-                        null,
-                        await callback(...args.slice(0, args.length - 1)),
+                callback(...args.slice(0, args.length - 1))
+                    .then(result => clientCallback(null, result))
+                    .catch(e =>
+                        clientCallback(
+                            options && options.mapErrors
+                                ? options.mapErrors(e)
+                                : e,
+                        ),
                     );
-                } catch (e) {
-                    clientCallback(e);
-                }
             }
         });
     };
