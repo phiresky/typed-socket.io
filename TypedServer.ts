@@ -106,6 +106,10 @@ export type IPartialClientSocketHandler<N extends NeededInfo> = {
  * Usage: MyClass extends ClientSocketHandler<X> implements IClientSocketHandler<X> {...}
  */
 export class ClientSocketHandler<N extends NeededInfo> {
+    // this is so you can do
+    // `async some_rpc(info: typeof this._types.some_rpc.request): Promise<typeof this._types.some_rpc.response>`
+    // but `typeof this` isn't supported in typescript yet
+    // _types: {[k in keyof N["NamespaceSchema"]["ClientRPCs"]]: N["NamespaceSchema"]["ClientRPCs"][k]} = undefined!;
     constructor(
         readonly io: ts.ServerNamespaceNS<
             N["ServerDefinition"],
@@ -213,6 +217,16 @@ export abstract class Server<N extends NeededInfo> {
     ): any {
         return message + ": " + error;
     }
+    onClientRPCRejection(
+        _socket: ts.ServerSideClientSocketNS<
+            N["ServerDefinition"],
+            N["NamespaceSchema"]
+        >,
+        message: string,
+        error: any,
+    ) {
+        return error;
+    }
 
     private safeHandleClientMessage<
         K extends keyof N["NamespaceSchema"]["ClientMessages"]
@@ -256,7 +270,7 @@ export abstract class Server<N extends NeededInfo> {
         schema: t.Type<any, any>,
     ) {
         if (args.length !== 2) {
-            const msg = this.onClientRPCTypeError(
+            const msg = await this.onClientRPCTypeError(
                 handler.socket,
                 message,
                 `Invalid arguments: passed ${
@@ -268,7 +282,7 @@ export abstract class Server<N extends NeededInfo> {
         }
         const [arg, cb] = args;
         if (typeof cb !== "function") {
-            const msg = this.onClientRPCTypeError(
+            const msg = await this.onClientRPCTypeError(
                 handler.socket,
                 message,
                 "No callback",
@@ -280,7 +294,7 @@ export abstract class Server<N extends NeededInfo> {
         if (isLeft(validation)) {
             const error = PathReporter.report(validation).join("\n");
             cb(
-                this.onClientRPCTypeError(
+                await this.onClientRPCTypeError(
                     handler.socket,
                     message,
                     "Type Error: " + error,
@@ -292,7 +306,7 @@ export abstract class Server<N extends NeededInfo> {
         try {
             cb(null, await (handler[message] as any)(safeArg));
         } catch (e) {
-            cb(e);
+            cb(await this.onClientRPCRejection(handler.socket, message, e));
         }
     }
 }
