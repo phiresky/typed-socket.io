@@ -1,7 +1,7 @@
 import * as io from "socket.io";
-import { TypedServer } from "./common";
+import { MyRootServer } from "./common";
 
-const server = io(8000) as TypedServer;
+const server = io(8000) as MyRootServer;
 const chatServer = server.of("/chat");
 
 chatServer.on("connection", client => {
