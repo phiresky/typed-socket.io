@@ -45,6 +45,7 @@ class ChatServer extends Server<ChatServerInfo> {
     constructor(ioServer: MyRootServer) {
         super(runtimeSchema);
         this.io = ioServer.of("/chat");
+        this.listen(this.io);
     }
 
     onConnection(socket: ChatSocket) {
