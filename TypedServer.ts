@@ -7,7 +7,6 @@ import * as ts from "./typedSocket";
 import { isLeft } from "fp-ts/lib/Either";
 import { PathReporter } from "io-ts/lib/PathReporter";
 import { ServerDefinition } from "./typedSocket";
-import { mixed } from "./util";
 
 /** use this for calls with no arguments */
 export const empty = t.union([t.undefined, t.null]);
@@ -15,15 +14,15 @@ export type empty = undefined | null;
 
 export interface RuntimeClientRPCStructure {
     [name: string]: {
-        request: t.Type<mixed, any>;
-        response: t.Type<mixed, any>;
+        request: t.Type<t.mixed>;
+        response: t.Type<t.mixed>;
     };
 }
 export interface RuntimeClientMessagesStructure {
-    [name: string]: t.Type<mixed, any>;
+    [name: string]: t.Type<t.mixed>;
 }
 export interface RuntimeServerMessagesStructure {
-    [name: string]: t.Type<mixed, any>;
+    [name: string]: t.Type<t.mixed>;
 }
 export type RuntimeNamespaceSchema = {
     ServerMessages: RuntimeServerMessagesStructure;
@@ -56,22 +55,22 @@ export type ToCompiletime<S extends RuntimeNamespaceSchema> = {
         [k in keyof S["ClientRPCs"]]: {
             request: t.TypeOf<S["ClientRPCs"][k]["request"]>;
             response: t.TypeOf<S["ClientRPCs"][k]["response"]>;
-            error: mixed;
+            error: t.mixed;
         }
     };
 };
 
 export type FromCompiletime<S extends ts.NamespaceSchema> = {
     ServerMessages: {
-        [k in keyof S["ServerMessages"]]: t.Type<mixed, S["ServerMessages"][k]>
+        [k in keyof S["ServerMessages"]]: t.Type<S["ServerMessages"][k]>
     };
     ClientMessages: {
-        [k in keyof S["ClientMessages"]]: t.Type<mixed, S["ClientMessages"][k]>
+        [k in keyof S["ClientMessages"]]: t.Type<S["ClientMessages"][k]>
     };
     ClientRPCs: {
         [k in keyof S["ClientRPCs"]]: {
-            request: t.Type<mixed, S["ClientRPCs"][k]["request"]>;
-            response: t.Type<mixed, S["ClientRPCs"][k]["response"]>;
+            request: t.Type<S["ClientRPCs"][k]["request"]>;
+            response: t.Type<S["ClientRPCs"][k]["response"]>;
             // error: t.Type<any, any>;
         }
     };
@@ -147,7 +146,8 @@ export abstract class Server<N extends NeededInfo> {
         io: ts.ServerNamespaceNS<N["ServerDefinition"], N["NamespaceSchema"]>,
     ) {
         const schema = this.schema;
-        io.on("connection", socket => {
+        // todo: socket here was correctly inferred in typescript 2.6, but it is implicitly any in typescript 2.7+
+        io.on("connection", (socket: any) => {
             const handler = this.onConnection(socket);
             if (!handler) {
                 socket.disconnect();
@@ -234,7 +234,7 @@ export abstract class Server<N extends NeededInfo> {
         handler: IPartialClientSocketHandler<N>,
         message: K,
         args: any[],
-        schema: t.Type<mixed, any>,
+        schema: t.Type<t.mixed>,
     ) {
         if (args.length !== 1) {
             this.onClientMessageTypeError(
@@ -245,7 +245,7 @@ export abstract class Server<N extends NeededInfo> {
             return;
         }
         const arg = args[0];
-        const validation = t.validate(arg, schema);
+        const validation = schema.decode(arg);
         if (isLeft(validation)) {
             const error = PathReporter.report(validation).join("\n");
             this.onClientMessageTypeError(
@@ -267,7 +267,7 @@ export abstract class Server<N extends NeededInfo> {
         handler: IPartialClientSocketHandler<N>,
         message: keyof N["NamespaceSchema"]["ClientRPCs"],
         args: any[],
-        schema: t.Type<mixed, any>,
+        schema: t.Type<t.mixed>,
     ) {
         if (args.length !== 2) {
             const msg = await this.onClientRPCTypeError(
@@ -290,7 +290,7 @@ export abstract class Server<N extends NeededInfo> {
             if (this.__config.logUnsendableErrors) console.error(msg);
             return;
         }
-        const validation = t.validate(arg, schema);
+        const validation = schema.decode(arg);
         if (isLeft(validation)) {
             const error = PathReporter.report(validation).join("\n");
             cb(

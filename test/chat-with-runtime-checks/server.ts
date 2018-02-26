@@ -17,7 +17,7 @@ import {
 } from "../../typedSocket";
 import * as t from "io-ts";
 import * as io from "socket.io";
-const unchecked = <T>() => t.any as t.Type<t.mixed, T>;
+const unchecked = <T>() => t.any as t.Type<T>;
 
 type ChatServerInfo = NeededInfoFor<MyServerDefinition, "/chat">;
 type ChatNamespace = ServerNamespace<MyServerDefinition, "/chat">;
@@ -51,6 +51,7 @@ class ChatServer extends Server<ChatServerInfo> {
     onConnection(socket: ChatSocket) {
         if (false) {
             // reject connection
+            // @ts-ignore unreachable
             return null;
         }
         return new ChatClient(socket);
@@ -59,11 +60,13 @@ class ChatServer extends Server<ChatServerInfo> {
 
 type RPCs = Namespace<MyServerDefinition, "/chat">["ClientRPCs"];
 type Req<K extends keyof RPCs> = RPCs[K]["request"];
-type Res<K extends keyof RPCs> = Promise<RPCs[K]["response"]>;
+type Res<K extends keyof RPCs> = RPCs[K]["response"];
 
 class ChatClient extends ClientSocketHandler<ChatServerInfo>
     implements IClientSocketHandler<ChatServerInfo> {
-    async postMessage(message: Req<"postMessage">): Res<"postMessage"> {
+    async postMessage(
+        message: Req<"postMessage">,
+    ): Promise<Res<"postMessage">> {
         this.socket.nsp.emit("chatMessage", {
             ...message,
             sender: this.socket.id,
