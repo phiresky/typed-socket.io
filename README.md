@@ -124,7 +124,7 @@ export type TypedServer = RootServer<MyServerDefinition>;
 export type TypedChatClient = ClientSideSocket<MyServerDefinition, "/chat">;
 ```
 
-A runnable version of this example is in [test/chat-example](test/chat-example).
+A runnable version of this example is in [example/basic-chat](example/basic-chat).
 
 Note that when using this library this way, the types are only checked at compile-time, which means that you trust your clients to send the correct data at runtime.
 
@@ -160,7 +160,7 @@ If you want runtime type safety, you can use the following classes:
 
 By using this class all client requests will be type checked and rejected if they don't match the given schema.
 
-Example: See [test/chat-with-runtime-checks/server.ts](test/chat-with-runtime-checks/server.ts)
+Example: See [example/chat-with-runtime-checks/server.ts](example/chat-with-runtime-checks/server.ts)
 
 Needs a peer dependency to socket.io.
 
@@ -168,6 +168,6 @@ Needs a peer dependency to socket.io.
 
 This class ensures that you listen to all messages a server can send.
 
-Example: See [test/chat-with-runtime-checks/client.ts](test/chat-with-runtime-checks/client.ts)
+Example: See [example/chat-with-runtime-checks/client.ts](example/chat-with-runtime-checks/client.ts)
 
 Needs a peer dependency to socket.io-client.
