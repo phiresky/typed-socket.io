@@ -10,7 +10,7 @@ export { ChatMessage };
 const unchecked = <T>() => t.any as t.Type<T>;
 
 export const runtimeSchema = {
-    // messages the server can emit:
+    // messages the server may send to the clients
     ServerMessages: {
         chatMessage: unchecked<ChatMessage>(),
         history: unchecked<ChatMessage[]>(),
@@ -25,6 +25,7 @@ export const runtimeSchema = {
             response: unchecked<"ok">(),
         },
     },
+    // messages clients can send to the server (without a response)
     ClientMessages: {},
 };
 
