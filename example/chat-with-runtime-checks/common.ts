@@ -2,7 +2,7 @@
  * common code that can be imported from server code and client code
  */
 import { NeededInfoFor, ToCompiletime } from "../../TypedServer";
-import { ChatMessage } from "../chat-example/common";
+import { ChatMessage } from "../basic-chat/common";
 import { ServerSideClientSocket, RootServer } from "../../typedSocket";
 import * as t from "io-ts";
 import { ServerDefinition, SimpleNamespace } from "../..";
@@ -11,11 +11,13 @@ const unchecked = <T>() => t.any as t.Type<T>;
 
 export const runtimeSchema = {
     // messages the server may send to the clients
+    // since we generally trust the server, these are unchecked
     ServerMessages: {
         chatMessage: unchecked<ChatMessage>(),
         history: unchecked<ChatMessage[]>(),
     },
     // messages clients can send to the server, with a typed response
+    // these are checked at runtime
     ClientRPCs: {
         postMessage: {
             request: t.strict({
@@ -33,6 +35,7 @@ export type ChatNamespace = SimpleNamespace<
     ToCompiletime<typeof runtimeSchema>
 >;
 
+// a socket.io server may contain multiple namespaces, but we only have one here (/chat)
 export interface MyServerDefinition extends ServerDefinition {
     namespaces: {
         "/chat": ChatNamespace;

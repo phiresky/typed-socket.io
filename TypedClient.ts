@@ -2,11 +2,7 @@
  * This file is for client-side use.
  */
 
-import {
-    ClientSideSocketNS,
-    GeneralServerMessages,
-    NamespaceSchema,
-} from "./typedSocket";
+import { ClientSideSocketNS, internal, NamespaceSchema } from "./typedSocket";
 import { promisifySocket, autoReconnect, mixed } from "./util";
 
 import * as io from "socket.io-client";
@@ -26,8 +22,8 @@ function getKeys(obj: any) {
  * needed because typescript does not support handling index signature as interface
  */
 export type ITypedClient<S extends NamespaceSchema> = {
-    [k in keyof (S["ServerMessages"] & GeneralServerMessages)]: (
-        message: (S["ServerMessages"] & GeneralServerMessages)[k],
+    [k in keyof (S["ServerMessages"] & internal.GeneralServerMessages)]: (
+        message: (S["ServerMessages"] & internal.GeneralServerMessages)[k],
     ) => void
 };
 
@@ -35,8 +31,8 @@ export type ITypedClient<S extends NamespaceSchema> = {
  * the same as ITypedClient but listening to events is optional
  */
 export type ITypedPartialClient<S extends NamespaceSchema> = {
-    [k in keyof (S["ServerMessages"] & GeneralServerMessages)]?: (
-        message: (S["ServerMessages"] & GeneralServerMessages)[k],
+    [k in keyof (S["ServerMessages"] & internal.GeneralServerMessages)]?: (
+        message: (S["ServerMessages"] & internal.GeneralServerMessages)[k],
     ) => void
 };
 

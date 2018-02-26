@@ -12,27 +12,45 @@ import { ServerDefinition } from "./typedSocket";
 export const empty = t.union([t.undefined, t.null]);
 export type empty = undefined | null;
 
-export interface RuntimeClientRPCStructure {
-    [name: string]: {
-        request: t.Type<any>;
-        response: t.Type<any>;
+/** things that you probably don't need to directly use */
+export namespace internal {
+    export interface RuntimeClientRPCStructure {
+        [name: string]: {
+            request: t.Type<any>;
+            response: t.Type<any>;
+        };
+    }
+    export interface RuntimeClientMessagesStructure {
+        [name: string]: t.Type<any>;
+    }
+    export interface RuntimeServerMessagesStructure {
+        [name: string]: t.Type<any>;
+    }
+    export type ClientMessagesHandler<S extends ts.NamespaceSchema> = {
+        [k in keyof S["ClientMessages"]]: (
+            message: S["ClientMessages"][k],
+        ) => void
+    };
+
+    export type ClientRPCsHandler<S extends ts.NamespaceSchema> = {
+        [k in keyof S["ClientRPCs"]]: (
+            message: S["ClientRPCs"][k]["request"],
+        ) => Promise<S["ClientRPCs"][k]["response"]>
+    };
+    export type RuntimeNamespaceSchema = {
+        ServerMessages: RuntimeServerMessagesStructure;
+        ClientMessages: RuntimeClientMessagesStructure;
+        ClientRPCs: RuntimeClientRPCStructure;
     };
 }
-export interface RuntimeClientMessagesStructure {
-    [name: string]: t.Type<any>;
-}
-export interface RuntimeServerMessagesStructure {
-    [name: string]: t.Type<any>;
-}
-export type RuntimeNamespaceSchema = {
-    ServerMessages: RuntimeServerMessagesStructure;
-    ClientMessages: RuntimeClientMessagesStructure;
-    ClientRPCs: RuntimeClientRPCStructure;
-};
 
+/**
+ * a wrapper around all the info needed to create a typed Server and
+ * ClientSocketHandler, so we only need to pass one generic parameter to those classes
+ */
 export type NeededInfo<
     S extends ServerDefinition = ServerDefinition,
-    MyNamespaceSchema extends ts.NamespaceSchema = ts.NamespaceSchema
+    MyNamespaceSchema extends ts.FullNamespaceSchema = ts.FullNamespaceSchema
 > = {
     ServerDefinition: S;
     NamespaceSchema: MyNamespaceSchema;
@@ -44,7 +62,7 @@ export type NeededInfoFor<
     K extends ts.NamespaceNames<S>
 > = NeededInfo<S, ts.Namespace<S, K>>;
 
-export type ToCompiletime<S extends RuntimeNamespaceSchema> = {
+export type ToCompiletime<S extends internal.RuntimeNamespaceSchema> = {
     ServerMessages: {
         [k in keyof S["ServerMessages"]]: t.TypeOf<S["ServerMessages"][k]>
     };
@@ -77,20 +95,6 @@ export type FromCompiletime<S extends ts.NamespaceSchema> = {
 };
 export type ToRuntime<S extends ts.NamespaceSchema> = FromCompiletime<S>;
 
-export namespace internal {
-    export type ClientMessagesHandler<S extends ts.NamespaceSchema> = {
-        [k in keyof S["ClientMessages"]]: (
-            message: S["ClientMessages"][k],
-        ) => void
-    };
-
-    export type ClientRPCsHandler<S extends ts.NamespaceSchema> = {
-        [k in keyof S["ClientRPCs"]]: (
-            message: S["ClientRPCs"][k]["request"],
-        ) => Promise<S["ClientRPCs"][k]["response"]>
-    };
-}
-
 export type IClientSocketHandler<N extends NeededInfo> = {
     socket: ts.ServerSideClientSocketNS<
         N["ServerDefinition"],
@@ -105,6 +109,7 @@ export type IPartialClientSocketHandler<N extends NeededInfo> = {
         N["NamespaceSchema"]
     >;
 } & Partial<IClientSocketHandler<N>>;
+
 /**
  * Usage: MyClass extends ClientSocketHandler<X> implements IClientSocketHandler<X> {...}
  */
@@ -125,6 +130,8 @@ export class ClientSocketHandler<N extends NeededInfo> {
 }
 
 /**
+ * Get the type of the request for a specific client RPC.
+ *
  * Example usage:
  *
  * class ChatClient extends ClientSocketHandler<ChatServerInfo>
@@ -143,10 +150,12 @@ export type Req<
     t extends string
 > = C["_types"][t]["request"];
 
+/**
+ * Get the type of the response the server will send for a given client RPC.
+ */
 export type Res<C extends ClientSocketHandler<any>, t extends string> = Promise<
     C["_types"][t]["response"]
 >;
-
 // https://github.com/Microsoft/TypeScript/issues/12776
 export const Res = Promise;
 
@@ -225,6 +234,9 @@ export abstract class Server<N extends NeededInfo> {
         >,
     ): IPartialClientSocketHandler<N> | null;
 
+    /**
+     * called when a client sends a message that has a type error
+     */
     onClientMessageTypeError(
         socket: ts.ServerSideClientSocketNS<
             N["ServerDefinition"],
@@ -235,7 +247,11 @@ export abstract class Server<N extends NeededInfo> {
     ): void {
         console.error(socket.id + ": " + message + ": " + error);
     }
-    /** return what should be sent as the callback error. override this to customize. By default, the error message will be returned */
+    /**
+     * return what should be sent as the callback error. override this to customize. By default, the error message will be returned
+     *
+     * if the callback is missing, onClientMessageTypeError will be called instead
+     */
     onClientRPCTypeError(
         _socket: ts.ServerSideClientSocketNS<
             N["ServerDefinition"],
@@ -246,6 +262,9 @@ export abstract class Server<N extends NeededInfo> {
     ): any {
         return message + ": " + error;
     }
+    /**
+     * override this method to map server-side Promise rejections / throws to a friendly client message
+     */
     onClientRPCRejection(
         _socket: ts.ServerSideClientSocketNS<
             N["ServerDefinition"],
@@ -299,24 +318,22 @@ export abstract class Server<N extends NeededInfo> {
         schema: t.Type<t.mixed>,
     ) {
         if (args.length !== 2) {
-            const msg = await this.onClientRPCTypeError(
+            await this.onClientMessageTypeError(
                 handler.socket,
                 message,
                 `Invalid arguments: passed ${
                     args.length
                 }, expected (argument, callback)`,
             );
-            if (this.__config.logUnsendableErrors) console.error(msg);
             return;
         }
         const [arg, cb] = args;
         if (typeof cb !== "function") {
-            const msg = await this.onClientRPCTypeError(
+            await this.onClientMessageTypeError(
                 handler.socket,
                 message,
                 "No callback",
             );
-            if (this.__config.logUnsendableErrors) console.error(msg);
             return;
         }
         const validation = schema.decode(arg);
