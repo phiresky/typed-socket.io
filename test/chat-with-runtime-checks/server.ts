@@ -1,68 +1,34 @@
 import {
-    NeededInfoFor,
     Server,
-    FromCompiletime,
     ClientSocketHandler,
     IClientSocketHandler,
 } from "../../TypedServer";
-import {
-    MyServerDefinition,
-    ChatMessage,
-    MyRootServer,
-} from "../chat-example/common";
-import {
-    Namespace,
-    ServerSideClientSocket,
-    ServerNamespace,
-} from "../../typedSocket";
-import * as t from "io-ts";
 import * as io from "socket.io";
-const unchecked = <T>() => t.any as t.Type<T>;
+import {
+    ChatServerInfo,
+    MyRootServer,
+    ChatSocket,
+    Req,
+    Res,
+    runtimeSchema,
+} from "./common";
 
-type ChatServerInfo = NeededInfoFor<MyServerDefinition, "/chat">;
-type ChatNamespace = ServerNamespace<MyServerDefinition, "/chat">;
-type ChatSocket = ServerSideClientSocket<MyServerDefinition, "/chat">;
-
-const runtimeSchema: FromCompiletime<Namespace<MyServerDefinition, "/chat">> = {
-    ServerMessages: {
-        chatMessage: unchecked<ChatMessage>(),
-        history: unchecked<ChatMessage[]>(),
-    },
-    // messages clients can send to the server, with a typed response
-    ClientRPCs: {
-        postMessage: {
-            request: t.strict({
-                message: t.string,
-                channel: t.union([t.literal("en"), t.literal("ru")]),
-            }),
-            response: unchecked<"ok">(),
-        },
-    },
-    ClientMessages: {},
-};
 class ChatServer extends Server<ChatServerInfo> {
-    io: ChatNamespace;
     constructor(ioServer: MyRootServer) {
         super(runtimeSchema);
-        this.io = ioServer.of("/chat");
-        this.listen(this.io);
+        this.listen(ioServer.of("/chat"));
     }
 
     onConnection(socket: ChatSocket) {
-        if (false) {
-            // reject connection
-            // @ts-ignore unreachable
-            return null;
-        }
-        return new ChatClient(socket);
+        // to reject connection, return null
+        return new ChatClientHandler(socket);
     }
 }
 
-type RPCs = Namespace<MyServerDefinition, "/chat">["ClientRPCs"];
-type Req<K extends keyof RPCs> = RPCs[K]["request"];
-type Res<K extends keyof RPCs> = RPCs[K]["response"];
-
-class ChatClient extends ClientSocketHandler<ChatServerInfo>
+/**
+ * one of these will be created for every socket connection
+ */
+class ChatClientHandler extends ClientSocketHandler<ChatServerInfo>
     implements IClientSocketHandler<ChatServerInfo> {
     async postMessage(
         message: Req<"postMessage">,
@@ -70,8 +36,10 @@ class ChatClient extends ClientSocketHandler<ChatServerInfo>
         this.socket.nsp.emit("chatMessage", {
             ...message,
             sender: this.socket.id,
+            // foo: "bar" // Object literal may only specify known properties, and 'foo' does not exist in type 'ChatMessage'.
         });
         return "ok";
+        // return "ook" // [ts] Type '"ook"' is not assignable to type '"ok"'.
     }
 }
 

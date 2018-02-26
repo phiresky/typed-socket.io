@@ -14,15 +14,15 @@ export type empty = undefined | null;
 
 export interface RuntimeClientRPCStructure {
     [name: string]: {
-        request: t.Type<t.mixed>;
-        response: t.Type<t.mixed>;
+        request: t.Type<any>;
+        response: t.Type<any>;
     };
 }
 export interface RuntimeClientMessagesStructure {
-    [name: string]: t.Type<t.mixed>;
+    [name: string]: t.Type<any>;
 }
 export interface RuntimeServerMessagesStructure {
-    [name: string]: t.Type<t.mixed>;
+    [name: string]: t.Type<any>;
 }
 export type RuntimeNamespaceSchema = {
     ServerMessages: RuntimeServerMessagesStructure;
@@ -75,6 +75,7 @@ export type FromCompiletime<S extends ts.NamespaceSchema> = {
         }
     };
 };
+export type ToRuntime<S extends ts.NamespaceSchema> = FromCompiletime<S>;
 
 export namespace internal {
     export type ClientMessagesHandler<S extends ts.NamespaceSchema> = {
@@ -111,7 +112,9 @@ export class ClientSocketHandler<N extends NeededInfo> {
     // this is so you can do
     // `async some_rpc(info: typeof this._types.some_rpc.request): Promise<typeof this._types.some_rpc.response>`
     // but `typeof this` isn't supported in typescript yet
-    // _types: {[k in keyof N["NamespaceSchema"]["ClientRPCs"]]: N["NamespaceSchema"]["ClientRPCs"][k]} = undefined!;
+    _types: {
+        [k in keyof N["NamespaceSchema"]["ClientRPCs"]]: N["NamespaceSchema"]["ClientRPCs"][k]
+    } = undefined!;
 
     constructor(
         readonly socket: ts.ServerSideClientSocketNS<
@@ -120,6 +123,32 @@ export class ClientSocketHandler<N extends NeededInfo> {
         >,
     ) {}
 }
+
+/**
+ * Example usage:
+ *
+ * class ChatClient extends ClientSocketHandler<ChatServerInfo>
+ *   implements IClientSocketHandler<ChatServerInfo> {
+ *   async postMessage(
+ *       message: Req<this, "postMessage">,
+ *   ): Res<this, "postMessage"> {
+ *       ...
+ *   }
+ * }
+ *
+ * Sadly somewhat broken due to https://github.com/Microsoft/TypeScript/issues/10727
+ */
+export type Req<
+    C extends ClientSocketHandler<any>,
+    t extends string
+> = C["_types"][t]["request"];
+
+export type Res<C extends ClientSocketHandler<any>, t extends string> = Promise<
+    C["_types"][t]["response"]
+>;
+
+// https://github.com/Microsoft/TypeScript/issues/12776
+export const Res = Promise;
 
 export interface ServerConfig {
     /** allow the client socket handler to ignore some client messages */

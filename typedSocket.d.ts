@@ -58,7 +58,7 @@ export type Namespace<
 > = D["namespaces"][K];
 
 /**
- * messages that any client can receive "from the server" (see https://socket.io/docs/client-api/)
+ * messages that any client can receive "from the server" (see https://github.com/socketio/socket.io-client/blob/master/docs/API.md)
  */
 export interface GeneralServerMessages {
     /** socket.io emits this as soon as the client is connected */
@@ -67,6 +67,12 @@ export interface GeneralServerMessages {
     disconnect: string;
     /** Fired when a socket.io error occurs. */
     error: any;
+    /** Fired upon a connection error. */
+    connect_error: any;
+    /** Fired upon a connection timeout. */
+    /*connect_timeout: any;
+    reconnect: number;
+    reconnect_attempt: number;*/
 }
 
 /**

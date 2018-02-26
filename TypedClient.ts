@@ -26,8 +26,8 @@ function getKeys(obj: any) {
  * needed because typescript does not support handling index signature as interface
  */
 export type ITypedClient<S extends NamespaceSchema> = {
-    [k in (keyof S["ServerMessages"]) | keyof GeneralServerMessages]: (
-        message: S["ServerMessages"][k],
+    [k in keyof (S["ServerMessages"] & GeneralServerMessages)]: (
+        message: (S["ServerMessages"] & GeneralServerMessages)[k],
     ) => void
 };
 
@@ -35,8 +35,8 @@ export type ITypedClient<S extends NamespaceSchema> = {
  * the same as ITypedClient but listening to events is optional
  */
 export type ITypedPartialClient<S extends NamespaceSchema> = {
-    [k in (keyof S["ServerMessages"]) | keyof GeneralServerMessages]?: (
-        message: S["ServerMessages"][k],
+    [k in keyof (S["ServerMessages"] & GeneralServerMessages)]?: (
+        message: (S["ServerMessages"] & GeneralServerMessages)[k],
     ) => void
 };
 
@@ -76,7 +76,15 @@ export abstract class TypedClient<S extends NamespaceSchema> {
 
     connect() {}
 
+    connect_error(err: Error) {
+        console.log("socket connect error", err);
+    }
+
     error(msg: string) {
         console.error("socket error", msg);
+    }
+
+    disconnect(reason: string) {
+        console.log("disconnected, reason:", reason);
     }
 }

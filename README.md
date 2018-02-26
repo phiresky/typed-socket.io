@@ -158,10 +158,16 @@ If you want runtime type safety, you can use the following classes:
 
 ### TypedServer
 
-Example: TODO
+By using this class all client requests will be type checked and rejected if they don't match the given schema.
+
+Example: See [test/chat-with-runtime-checks/server.ts](test/chat-with-runtime-checks/server.ts)
+
 Needs a peer dependency to socket.io.
 
 ### TypedClient
 
-Example: TODO
+This class ensures that you listen to all messages a server can send.
+
+Example: See [test/chat-with-runtime-checks/client.ts](test/chat-with-runtime-checks/client.ts)
+
 Needs a peer dependency to socket.io-client.
