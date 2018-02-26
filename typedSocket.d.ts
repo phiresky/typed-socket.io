@@ -211,6 +211,7 @@ export type ServerSideClientSocketNS<
 > &
     NS["CustomServerClientInterface"] & {
         server: RootServer<D>;
+        nsp: ServerNamespaceNS<D, NS>;
     };
 
 interface ServerSideClientSocketI<

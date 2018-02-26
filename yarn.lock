@@ -360,9 +360,9 @@ indexof@0.0.1:
   version "0.0.1"
   resolved "https://registry.yarnpkg.com/indexof/-/indexof-0.0.1.tgz#82dc336d232b9062179d05ab3293a66059fd435d"
 
-io-ts@^0.9.4:
-  version "0.9.4"
-  resolved "https://registry.yarnpkg.com/io-ts/-/io-ts-0.9.4.tgz#b3ba3b64fa521dba7fef0b1e1ae9f90f9c62d3a4"
+io-ts@^0.9.7:
+  version "0.9.7"
+  resolved "https://registry.yarnpkg.com/io-ts/-/io-ts-0.9.7.tgz#60c2e0c701583e1420ffa727c09e0e2f7cf85154"
   dependencies:
     fp-ts "^0.6.4"
 
@@ -837,6 +837,10 @@ symbol-observable@^0.2.2:
 to-array@0.1.4:
   version "0.1.4"
   resolved "https://registry.yarnpkg.com/to-array/-/to-array-0.1.4.tgz#17e6c11f73dd4f3d74cda7a4ff3238e9ad9bf890"
+
+typescript@2.6:
+  version "2.6.2"
+  resolved "https://registry.yarnpkg.com/typescript/-/typescript-2.6.2.tgz#3c5b6fd7f6de0914269027f03c0946758f7673a4"
 
 ultron@~1.1.0:
   version "1.1.1"

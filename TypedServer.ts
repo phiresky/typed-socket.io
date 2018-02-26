@@ -7,6 +7,7 @@ import * as ts from "./typedSocket";
 import { isLeft } from "fp-ts/lib/Either";
 import { PathReporter } from "io-ts/lib/PathReporter";
 import { ServerDefinition } from "./typedSocket";
+import { mixed } from "./util";
 
 /** use this for calls with no arguments */
 export const empty = t.union([t.undefined, t.null]);
@@ -14,15 +15,15 @@ export type empty = undefined | null;
 
 export interface RuntimeClientRPCStructure {
     [name: string]: {
-        request: t.Type<any, any>;
-        response: t.Type<any, any>;
+        request: t.Type<mixed, any>;
+        response: t.Type<mixed, any>;
     };
 }
 export interface RuntimeClientMessagesStructure {
-    [name: string]: t.Type<any, any>;
+    [name: string]: t.Type<mixed, any>;
 }
 export interface RuntimeServerMessagesStructure {
-    [name: string]: t.Type<any, any>;
+    [name: string]: t.Type<mixed, any>;
 }
 export type RuntimeNamespaceSchema = {
     ServerMessages: RuntimeServerMessagesStructure;
@@ -39,6 +40,11 @@ export type NeededInfo<
     RuntimeSchema: FromCompiletime<MyNamespaceSchema>;
 };
 
+export type NeededInfoFor<
+    S extends ServerDefinition,
+    K extends ts.NamespaceNames<S>
+> = NeededInfo<S, ts.Namespace<S, K>>;
+
 export type ToCompiletime<S extends RuntimeNamespaceSchema> = {
     ServerMessages: {
         [k in keyof S["ServerMessages"]]: t.TypeOf<S["ServerMessages"][k]>
@@ -50,22 +56,22 @@ export type ToCompiletime<S extends RuntimeNamespaceSchema> = {
         [k in keyof S["ClientRPCs"]]: {
             request: t.TypeOf<S["ClientRPCs"][k]["request"]>;
             response: t.TypeOf<S["ClientRPCs"][k]["response"]>;
-            error: any;
+            error: mixed;
         }
     };
 };
 
 export type FromCompiletime<S extends ts.NamespaceSchema> = {
     ServerMessages: {
-        [k in keyof S["ServerMessages"]]: t.Type<any, S["ServerMessages"][k]>
+        [k in keyof S["ServerMessages"]]: t.Type<mixed, S["ServerMessages"][k]>
     };
     ClientMessages: {
-        [k in keyof S["ClientMessages"]]: t.Type<any, S["ClientMessages"][k]>
+        [k in keyof S["ClientMessages"]]: t.Type<mixed, S["ClientMessages"][k]>
     };
     ClientRPCs: {
         [k in keyof S["ClientRPCs"]]: {
-            request: t.Type<any, S["ClientRPCs"][k]["request"]>;
-            response: t.Type<any, S["ClientRPCs"][k]["response"]>;
+            request: t.Type<mixed, S["ClientRPCs"][k]["request"]>;
+            response: t.Type<mixed, S["ClientRPCs"][k]["response"]>;
             // error: t.Type<any, any>;
         }
     };
@@ -86,7 +92,6 @@ export namespace internal {
 }
 
 export type IClientSocketHandler<N extends NeededInfo> = {
-    io: ts.ServerNamespaceNS<N["ServerDefinition"], N["NamespaceSchema"]>;
     socket: ts.ServerSideClientSocketNS<
         N["ServerDefinition"],
         N["NamespaceSchema"]
@@ -95,13 +100,11 @@ export type IClientSocketHandler<N extends NeededInfo> = {
     internal.ClientRPCsHandler<N["NamespaceSchema"]>;
 
 export type IPartialClientSocketHandler<N extends NeededInfo> = {
-    io: ts.ServerNamespaceNS<N["ServerDefinition"], N["NamespaceSchema"]>;
     socket: ts.ServerSideClientSocketNS<
         N["ServerDefinition"],
         N["NamespaceSchema"]
     >;
-} & Partial<internal.ClientMessagesHandler<N["NamespaceSchema"]>> &
-    Partial<internal.ClientRPCsHandler<N["NamespaceSchema"]>>;
+} & Partial<IClientSocketHandler<N>>;
 /**
  * Usage: MyClass extends ClientSocketHandler<X> implements IClientSocketHandler<X> {...}
  */
@@ -110,11 +113,8 @@ export class ClientSocketHandler<N extends NeededInfo> {
     // `async some_rpc(info: typeof this._types.some_rpc.request): Promise<typeof this._types.some_rpc.response>`
     // but `typeof this` isn't supported in typescript yet
     // _types: {[k in keyof N["NamespaceSchema"]["ClientRPCs"]]: N["NamespaceSchema"]["ClientRPCs"][k]} = undefined!;
+
     constructor(
-        readonly io: ts.ServerNamespaceNS<
-            N["ServerDefinition"],
-            N["NamespaceSchema"]
-        >,
         readonly socket: ts.ServerSideClientSocketNS<
             N["ServerDefinition"],
             N["NamespaceSchema"]
@@ -222,7 +222,7 @@ export abstract class Server<N extends NeededInfo> {
             N["ServerDefinition"],
             N["NamespaceSchema"]
         >,
-        message: string,
+        _message: string,
         error: any,
     ) {
         return error;
@@ -234,7 +234,7 @@ export abstract class Server<N extends NeededInfo> {
         handler: IPartialClientSocketHandler<N>,
         message: K,
         args: any[],
-        schema: t.Type<any, any>,
+        schema: t.Type<mixed, any>,
     ) {
         if (args.length !== 1) {
             this.onClientMessageTypeError(
@@ -267,7 +267,7 @@ export abstract class Server<N extends NeededInfo> {
         handler: IPartialClientSocketHandler<N>,
         message: keyof N["NamespaceSchema"]["ClientRPCs"],
         args: any[],
-        schema: t.Type<any, any>,
+        schema: t.Type<mixed, any>,
     ) {
         if (args.length !== 2) {
             const msg = await this.onClientRPCTypeError(

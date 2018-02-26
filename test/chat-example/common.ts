@@ -33,5 +33,5 @@ export interface MyServerDefinition extends ServerDefinition {
     };
 }
 
-export type TypedServer = RootServer<MyServerDefinition>;
+export type MyRootServer = RootServer<MyServerDefinition>;
 export type TypedChatClient = ClientSideSocket<MyServerDefinition, "/chat">;
