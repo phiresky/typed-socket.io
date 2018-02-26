@@ -145,7 +145,7 @@ export namespace internal {
             ) => void,
         ): this;
 
-        sockets: { [id: string]: ServerSideClientSocketNS<D, N> | undefined };
+        sockets: { [id: string]: ServerSideClientSocketNS<D, N> };
     }
 }
 
