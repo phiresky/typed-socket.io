@@ -10,7 +10,10 @@ import * as io from "socket.io-client";
 function getKeys(obj: any) {
     const keys: string[] = [];
     while (obj && obj !== Object.prototype) {
-        keys.push(...Object.getOwnPropertyNames(obj));
+        const properties = Object.getOwnPropertyNames(obj);
+        for (const prop of properties) {
+            if (keys.indexOf(prop) === -1) keys.push(prop);
+        }
         obj = Object.getPrototypeOf(obj);
     }
     return keys;
