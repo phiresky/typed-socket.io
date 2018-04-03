@@ -48,9 +48,11 @@ export abstract class TypedClient<S extends NamespaceSchema> {
     public readonly socket: ClientSideSocketNS<S>;
     constructor(
         connectPath: string,
-        config: { forceWebsockets?: boolean } = { forceWebsockets: false },
+        config: { forceWebsockets?: boolean; socketIoOpts?: any } = {
+            forceWebsockets: false,
+        },
     ) {
-        const opts = { autoConnect: false };
+        const opts = { autoConnect: false, ...config.socketIoOpts };
         if (config.forceWebsockets)
             Object.assign(opts, { transports: ["websocket"], upgrade: false });
         this.socket = io(connectPath, opts) as any;
