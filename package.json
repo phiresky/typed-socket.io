@@ -1,6 +1,6 @@
 {
     "name": "typed-socket.io",
-    "version": "0.5.3",
+    "version": "0.5.5",
     "description":
         "A library for fully typed client-server communication with socket.io and TypeScript",
     "main": "index.js",
