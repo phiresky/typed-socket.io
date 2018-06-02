@@ -113,6 +113,9 @@ export namespace internal {
             type: K,
             info: ServerMessages[K],
         ): this;
+
+        join(room: string | string[], callback?: (err: any) => void): this;
+        leave(room: string, callback?: (err: any) => void): this;
     }
 
     /**
