@@ -16,6 +16,7 @@
         "sourceMap": true,
         "experimentalDecorators": true,
         "noFallthroughCasesInSwitch": true,
+        "keyofStringsOnly": true,
         "newLine": "LF"
     },
     "exclude": ["node_modules"]

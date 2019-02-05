@@ -4,7 +4,6 @@
 
 import * as t from "io-ts";
 import * as ts from "./typedSocket";
-import { isLeft } from "fp-ts/lib/Either";
 import { PathReporter } from "io-ts/lib/PathReporter";
 import { ServerDefinition } from "./typedSocket";
 
@@ -294,7 +293,7 @@ export abstract class Server<N extends NeededInfo> {
         }
         const arg = args[0];
         const validation = schema.decode(arg);
-        if (isLeft(validation)) {
+        if (validation.isLeft()) {
             const error = PathReporter.report(validation).join("\n");
             this.onClientMessageTypeError(
                 handler.socket,
@@ -337,7 +336,7 @@ export abstract class Server<N extends NeededInfo> {
             return;
         }
         const validation = schema.decode(arg);
-        if (isLeft(validation)) {
+        if (validation.isLeft()) {
             const error = PathReporter.report(validation).join("\n");
             cb(
                 await this.onClientRPCTypeError(
