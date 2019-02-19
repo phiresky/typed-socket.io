@@ -3,9 +3,13 @@
  */
 import { NeededInfoFor, ToCompiletime } from "../../TypedServer";
 import { ChatMessage } from "../basic-chat/common";
-import { ServerSideClientSocket, RootServer } from "../../typedSocket";
+import {
+    ServerSideClientSocket,
+    RootServer,
+    ServerDefinition,
+    SimpleNamespace,
+} from "../../typedSocket";
 import * as t from "io-ts";
-import { ServerDefinition, SimpleNamespace } from "../..";
 export { ChatMessage };
 const unchecked = <T>() => t.any as t.Type<T>;
 
