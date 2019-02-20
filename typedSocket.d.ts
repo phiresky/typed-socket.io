@@ -154,8 +154,8 @@ export namespace internal {
 
 /** Namespace schema without custom interface additions */
 export interface NamespaceSchema {
-    ClientMessages: { [name: string]: any };
-    ServerMessages: { [name: string]: any };
+    ClientMessages: any; // { [name: string]: any };
+    ServerMessages: any; // { [name: string]: any };
     ClientRPCs: internal.ClientRPCStructure;
 }
 
