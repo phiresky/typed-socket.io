@@ -48,8 +48,8 @@ export namespace internal {
  * ClientSocketHandler, so we only need to pass one generic parameter to those classes
  */
 export type NeededInfo<
-    S extends ServerDefinition = ServerDefinition,
-    MyNamespaceSchema extends ts.FullNamespaceSchema = ts.FullNamespaceSchema
+    S extends ServerDefinition,
+    MyNamespaceSchema extends ts.FullNamespaceSchema
 > = {
     ServerDefinition: S;
     NamespaceSchema: MyNamespaceSchema;
@@ -94,7 +94,7 @@ export type FromCompiletime<S extends ts.NamespaceSchema> = {
 };
 export type ToRuntime<S extends ts.NamespaceSchema> = FromCompiletime<S>;
 
-export type IClientSocketHandler<N extends NeededInfo> = {
+export type IClientSocketHandler<N extends NeededInfo<any, any>> = {
     socket: ts.ServerSideClientSocketNS<
         N["ServerDefinition"],
         N["NamespaceSchema"]
@@ -102,7 +102,7 @@ export type IClientSocketHandler<N extends NeededInfo> = {
 } & internal.ClientMessagesHandler<N["NamespaceSchema"]> &
     internal.ClientRPCsHandler<N["NamespaceSchema"]>;
 
-export type IPartialClientSocketHandler<N extends NeededInfo> = {
+export type IPartialClientSocketHandler<N extends NeededInfo<any, any>> = {
     socket: ts.ServerSideClientSocketNS<
         N["ServerDefinition"],
         N["NamespaceSchema"]
@@ -112,7 +112,7 @@ export type IPartialClientSocketHandler<N extends NeededInfo> = {
 /**
  * Usage: MyClass extends ClientSocketHandler<X> implements IClientSocketHandler<X> {...}
  */
-export class ClientSocketHandler<N extends NeededInfo> {
+export class ClientSocketHandler<N extends NeededInfo<any, any>> {
     // this is so you can do
     // `async some_rpc(info: typeof this._types.some_rpc.request): Promise<typeof this._types.some_rpc.response>`
     // but `typeof this` isn't supported in typescript yet
@@ -171,7 +171,7 @@ const defaultServerConfig: ServerConfig = {
 /**
  * extend this class to create a typed socket.io server
  */
-export abstract class Server<N extends NeededInfo> {
+export abstract class Server<N extends NeededInfo<any, any>> {
     private readonly __config: ServerConfig;
     constructor(
         readonly schema: N["RuntimeSchema"],
