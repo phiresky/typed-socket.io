@@ -8,7 +8,7 @@ import {
     RootServer,
     ServerDefinition,
     SimpleNamespace,
-} from "../../typedSocket";
+} from "../..";
 import * as t from "io-ts";
 export { ChatMessage };
 const unchecked = <T>() => t.any as t.Type<T>;
