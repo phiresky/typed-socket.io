@@ -29,7 +29,9 @@ export namespace internal {
      * messages that the server can receive from any client
      */
     export interface GeneralClientMessages {
-        disconnect: void;
+        disconnect: string;
+        disconnecting: string;
+        error: any;
     }
 
     interface ClientSideSocketI<
