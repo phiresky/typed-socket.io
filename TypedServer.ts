@@ -6,6 +6,7 @@ import * as t from "io-ts";
 import * as ts from "./typedSocket";
 import { PathReporter } from "io-ts/lib/PathReporter";
 import { ServerDefinition } from "./typedSocket";
+import { isLeft } from "fp-ts/lib/Either";
 
 /** use this for calls with no arguments */
 export const empty = t.union([t.undefined, t.null]);
@@ -28,13 +29,13 @@ export namespace internal {
     export type ClientMessagesHandler<S extends ts.NamespaceSchema> = {
         [k in keyof S["ClientMessages"]]: (
             message: S["ClientMessages"][k],
-        ) => void
+        ) => void;
     };
 
     export type ClientRPCsHandler<S extends ts.NamespaceSchema> = {
         [k in keyof S["ClientRPCs"]]: (
             message: S["ClientRPCs"][k]["request"],
-        ) => Promise<S["ClientRPCs"][k]["response"]>
+        ) => Promise<S["ClientRPCs"][k]["response"]>;
     };
     export type RuntimeNamespaceSchema = {
         ServerMessages: RuntimeServerMessagesStructure;
@@ -63,33 +64,33 @@ export type NeededInfoFor<
 
 export type ToCompiletime<S extends internal.RuntimeNamespaceSchema> = {
     ServerMessages: {
-        [k in keyof S["ServerMessages"]]: t.TypeOf<S["ServerMessages"][k]>
+        [k in keyof S["ServerMessages"]]: t.TypeOf<S["ServerMessages"][k]>;
     };
     ClientMessages: {
-        [k in keyof S["ClientMessages"]]: t.TypeOf<S["ClientMessages"][k]>
+        [k in keyof S["ClientMessages"]]: t.TypeOf<S["ClientMessages"][k]>;
     };
     ClientRPCs: {
         [k in keyof S["ClientRPCs"]]: {
             request: t.TypeOf<S["ClientRPCs"][k]["request"]>;
             response: t.TypeOf<S["ClientRPCs"][k]["response"]>;
             error: t.mixed;
-        }
+        };
     };
 };
 
 export type FromCompiletime<S extends ts.NamespaceSchema> = {
     ServerMessages: {
-        [k in keyof S["ServerMessages"]]: t.Type<S["ServerMessages"][k]>
+        [k in keyof S["ServerMessages"]]: t.Type<S["ServerMessages"][k]>;
     };
     ClientMessages: {
-        [k in keyof S["ClientMessages"]]: t.Type<S["ClientMessages"][k]>
+        [k in keyof S["ClientMessages"]]: t.Type<S["ClientMessages"][k]>;
     };
     ClientRPCs: {
         [k in keyof S["ClientRPCs"]]: {
             request: t.Type<S["ClientRPCs"][k]["request"]>;
             response: t.Type<S["ClientRPCs"][k]["response"]>;
             // error: t.Type<any, any>;
-        }
+        };
     };
 };
 export type ToRuntime<S extends ts.NamespaceSchema> = FromCompiletime<S>;
@@ -117,7 +118,7 @@ export class ClientSocketHandler<N extends NeededInfo<any, any>> {
     // `async some_rpc(info: typeof this._types.some_rpc.request): Promise<typeof this._types.some_rpc.response>`
     // but `typeof this` isn't supported in typescript yet
     _types: {
-        [k in keyof N["NamespaceSchema"]["ClientRPCs"]]: N["NamespaceSchema"]["ClientRPCs"][k]
+        [k in keyof N["NamespaceSchema"]["ClientRPCs"]]: N["NamespaceSchema"]["ClientRPCs"][k];
     } = undefined!;
 
     constructor(
@@ -293,7 +294,7 @@ export abstract class Server<N extends NeededInfo<any, any>> {
         }
         const arg = args[0];
         const validation = schema.decode(arg);
-        if (validation.isLeft()) {
+        if (isLeft(validation)) {
             const error = PathReporter.report(validation).join("\n");
             this.onClientMessageTypeError(
                 handler.socket,
@@ -302,7 +303,7 @@ export abstract class Server<N extends NeededInfo<any, any>> {
             );
             return;
         }
-        const safeArg = validation.value;
+        const safeArg = validation.right;
         try {
             (handler[message] as any)(safeArg);
             return;
@@ -320,9 +321,7 @@ export abstract class Server<N extends NeededInfo<any, any>> {
             await this.onClientMessageTypeError(
                 handler.socket,
                 message,
-                `Invalid arguments: passed ${
-                    args.length
-                }, expected (argument, callback)`,
+                `Invalid arguments: passed ${args.length}, expected (argument, callback)`,
             );
             return;
         }
@@ -336,7 +335,7 @@ export abstract class Server<N extends NeededInfo<any, any>> {
             return;
         }
         const validation = schema.decode(arg);
-        if (validation.isLeft()) {
+        if (isLeft(validation)) {
             const error = PathReporter.report(validation).join("\n");
             cb(
                 await this.onClientRPCTypeError(
@@ -347,7 +346,7 @@ export abstract class Server<N extends NeededInfo<any, any>> {
             );
             return;
         }
-        const safeArg = validation.value;
+        const safeArg = validation.right;
         try {
             cb(null, await (handler[message] as any)(safeArg));
         } catch (e) {
