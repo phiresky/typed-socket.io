@@ -3,7 +3,7 @@
  */
 
 import { ClientSideSocketNS, internal, NamespaceSchema } from "./typedSocket";
-import { promisifySocket, autoReconnect, mixed } from "./util";
+import { promisifySocket, autoReconnect } from "./util";
 
 import * as io from "socket.io-client";
 
@@ -27,7 +27,7 @@ function getKeys(obj: any) {
 export type ITypedClient<S extends NamespaceSchema> = {
     [k in keyof (S["ServerMessages"] & internal.GeneralServerMessages)]: (
         message: (S["ServerMessages"] & internal.GeneralServerMessages)[k],
-    ) => void
+    ) => void;
 };
 
 /**
@@ -36,7 +36,7 @@ export type ITypedClient<S extends NamespaceSchema> = {
 export type ITypedPartialClient<S extends NamespaceSchema> = {
     [k in keyof (S["ServerMessages"] & internal.GeneralServerMessages)]?: (
         message: (S["ServerMessages"] & internal.GeneralServerMessages)[k],
-    ) => void
+    ) => void;
 };
 
 /**
@@ -64,7 +64,7 @@ export abstract class TypedClient<S extends NamespaceSchema> {
         const messages = getKeys(Object.getPrototypeOf(this));
         for (const msg of messages) {
             if (msg === "constructor" || msg === "destructor") continue;
-            const fn = (this as any)[msg] as mixed;
+            const fn = (this as any)[msg] as unknown;
             if (typeof fn !== "function")
                 throw Error("invalid listener for message " + msg);
             this.socket.on(msg, fn.bind(this));

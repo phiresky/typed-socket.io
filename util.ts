@@ -1,15 +1,5 @@
 import { ClientSideSocket, ServerSideClientSocket } from "./typedSocket";
 
-export type mixed =
-    | string
-    | number
-    | boolean
-    | symbol
-    | null
-    | undefined
-    | object
-    | Function;
-
 /**
  * promisify the emit function for RPC calls
  */
@@ -17,7 +7,7 @@ export function promisifySocket(
     socket: ClientSideSocket<any, any> | ServerSideClientSocket<any, any>,
     options?: { mapErrors?: (e: any) => any },
 ) {
-    socket.emitAsync = function(type: string, ...args: any[]) {
+    socket.emitAsync = function (type: string, ...args: any[]) {
         return new Promise((resolve, reject) => {
             (socket as any).emit(type, ...args, (err: any, res: any) => {
                 if (err) reject(err);
@@ -25,7 +15,7 @@ export function promisifySocket(
             });
         });
     };
-    socket.onAsync = function(
+    socket.onAsync = function (
         event: string,
         callback: (...args: any[]) => Promise<any>,
     ) {
@@ -43,8 +33,8 @@ export function promisifySocket(
             } else {
                 const clientCallback = args[args.length - 1];
                 callback(...args.slice(0, args.length - 1))
-                    .then(result => clientCallback(null, result))
-                    .catch(e =>
+                    .then((result) => clientCallback(null, result))
+                    .catch((e) =>
                         clientCallback(
                             options && options.mapErrors
                                 ? options.mapErrors(e)

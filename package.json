@@ -1,6 +1,6 @@
 {
     "name": "typed-socket.io",
-    "version": "0.6.0",
+    "version": "0.6.1",
     "description": "A library for fully typed client-server communication with socket.io and TypeScript",
     "main": "index.js",
     "typings": "index.d.ts",
@@ -19,15 +19,15 @@
         ]
     },
     "devDependencies": {
-        "@types/socket.io": "^2.1.4",
-        "@types/socket.io-client": "^1.4.32",
-        "fp-ts": "^2.5.3",
+        "@types/socket.io": "^2.1.8",
+        "@types/socket.io-client": "^1.4.33",
+        "fp-ts": "^2.6.6",
         "husky": "^4.2.5",
-        "io-ts": "^2.2.1",
-        "lint-staged": "^10.1.6",
-        "prettier": "^2.0.4",
+        "io-ts": "^2.2.6",
+        "lint-staged": "^10.2.11",
+        "prettier": "^2.0.5",
         "socket.io": "^2.3.0",
-        "typescript": "^3.8.3"
+        "typescript": "^3.9.5"
     },
     "peerDependencies": {
         "fp-ts": "^2.1.2",

@@ -73,7 +73,7 @@ export type ToCompiletime<S extends internal.RuntimeNamespaceSchema> = {
         [k in keyof S["ClientRPCs"]]: {
             request: t.TypeOf<S["ClientRPCs"][k]["request"]>;
             response: t.TypeOf<S["ClientRPCs"][k]["response"]>;
-            error: t.mixed;
+            error: unknown;
         };
     };
 };
@@ -282,7 +282,7 @@ export abstract class Server<N extends NeededInfo<any, any>> {
         handler: IPartialClientSocketHandler<N>,
         message: K,
         args: any[],
-        schema: t.Type<t.mixed>,
+        schema: t.Type<unknown>,
     ) {
         if (args.length !== 1) {
             this.onClientMessageTypeError(
@@ -315,7 +315,7 @@ export abstract class Server<N extends NeededInfo<any, any>> {
         handler: IPartialClientSocketHandler<N>,
         message: keyof N["NamespaceSchema"]["ClientRPCs"],
         args: any[],
-        schema: t.Type<t.mixed>,
+        schema: t.Type<unknown>,
     ) {
         if (args.length !== 2) {
             await this.onClientMessageTypeError(
