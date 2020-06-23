@@ -197,14 +197,14 @@ export abstract class Server<N extends NeededInfo<any, any>> {
                         console.warn("No handler for " + clientMessage);
                     continue;
                 }
-                socket.on(clientMessage, (...args: any[]) =>
+                socket.on(clientMessage, (...args: any[]) => {
                     this.safeHandleClientMessage(
                         handler,
                         clientMessage,
                         args,
                         schema.ClientMessages[clientMessage],
-                    ),
-                );
+                    );
+                });
             }
             for (const clientRPC in schema.ClientRPCs) {
                 if (typeof handler[clientRPC] !== "function") {
@@ -247,6 +247,20 @@ export abstract class Server<N extends NeededInfo<any, any>> {
     ): void {
         console.error(socket.id + ": " + message + ": " + error);
     }
+
+    /**
+     * called when the handler for a client message throws (sync or async)
+     */
+    onClientMessageCallError(
+        socket: ts.ServerSideClientSocketNS<
+            N["ServerDefinition"],
+            N["NamespaceSchema"]
+        >,
+        message: string,
+        thrown: any,
+    ): void {
+        console.error(socket.id, message, thrown);
+    }
     /**
      * return what should be sent as the callback error. override this to customize. By default, the error message will be returned
      *
@@ -276,7 +290,7 @@ export abstract class Server<N extends NeededInfo<any, any>> {
         return error;
     }
 
-    private safeHandleClientMessage<
+    private async safeHandleClientMessage<
         K extends keyof N["NamespaceSchema"]["ClientMessages"]
     >(
         handler: IPartialClientSocketHandler<N>,
@@ -305,10 +319,10 @@ export abstract class Server<N extends NeededInfo<any, any>> {
         }
         const safeArg = validation.right;
         try {
-            (handler[message] as any)(safeArg);
+            await (handler[message] as any)(safeArg);
             return;
         } catch (e) {
-            console.log(handler.socket.id, message, e);
+            this.onClientMessageCallError(handler.socket, message, e);
         }
     }
     private async safeHandleClientRPC(
