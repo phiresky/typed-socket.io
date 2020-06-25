@@ -15,6 +15,16 @@ export function promisifySocket(
             });
         });
     };
+    socket.rpc = new Proxy(
+        {},
+        {
+            get(obj, method) {
+                if (method in obj) return (obj as any)[method];
+                return (...args: any[]) => socket.emitAsync(method, ...args);
+            },
+        },
+    );
+
     socket.onAsync = function (
         event: string,
         callback: (...args: any[]) => Promise<any>,

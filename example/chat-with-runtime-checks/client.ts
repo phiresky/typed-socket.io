@@ -1,7 +1,7 @@
 import { TypedClient, ITypedClient } from "../../TypedClient";
 import { ChatNamespace, ChatMessage } from "./common";
 
-const host = process.argv[2] || "http://localhost:8000";
+const host = process.argv[2] || "http://localhost:8001";
 const ns = "/chat";
 
 const channelNames = { en: "English", ru: "Russian" };
@@ -23,6 +23,15 @@ async function run() {
         channel: "en",
     });
     console.assert(res === "ok");
+
+    // alternative interface
+    const rpc = listener.socket.rpc;
+
+    const res2 = await rpc.postMessage({
+        message: "Hello World 2",
+        channel: "en",
+    });
+    console.assert(res2 === "ok");
 }
 
 run();

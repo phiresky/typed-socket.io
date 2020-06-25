@@ -75,6 +75,13 @@ export namespace internal {
             info: ClientRPCs[K]["request"],
         ): Promise<ClientRPCs[K]["response"]>;
 
+        /** alternate interface to send messages by doing `await rpc.foo(data) instead of await .emitAsync("foo", data) */
+        rpc: {
+            [K in keyof ClientRPCs]: (
+                info: ClientRPCs[K]["request"],
+            ) => Promise<ClientRPCs[K]["response"]>;
+        };
+
         connected: boolean;
         connect(): any;
         disconnect(): any;
