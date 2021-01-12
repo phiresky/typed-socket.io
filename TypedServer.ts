@@ -100,11 +100,6 @@ export type IClientSocketHandler<N extends NeededInfo<any, any>> = {
         N["ServerDefinition"],
         N["NamespaceSchema"]
     >;
-    onBeforeHandle?(
-        type: "message" | "rpc",
-        message: string,
-        arg: unknown,
-    ): Promise<void>;
 } & internal.ClientMessagesHandler<N["NamespaceSchema"]> &
     internal.ClientRPCsHandler<N["NamespaceSchema"]>;
 
@@ -295,6 +290,28 @@ export abstract class Server<N extends NeededInfo<any, any>> {
         return error;
     }
 
+    /**
+     * override this method to change the behaviour of every message call
+     */
+    onClientMessageCall<K extends keyof N["NamespaceSchema"]["ClientMessages"]>(
+        handler: IPartialClientSocketHandler<N>,
+        message: K,
+        safeArg: unknown,
+    ) {
+        return (handler[message] as any)(safeArg);
+    }
+
+    /**
+     * override this method to change the behaviour of every rpc call
+     */
+    onClientRPCCall<K extends keyof N["NamespaceSchema"]["ClientMessages"]>(
+        handler: IPartialClientSocketHandler<N>,
+        message: K,
+        safeArg: unknown,
+    ): Promise<void> {
+        return (handler[message] as any)(safeArg);
+    }
+
     private async safeHandleClientMessage<
         K extends keyof N["NamespaceSchema"]["ClientMessages"]
     >(
@@ -324,9 +341,7 @@ export abstract class Server<N extends NeededInfo<any, any>> {
         }
         const safeArg = validation.right;
         try {
-            if (handler.onBeforeHandle)
-                await handler.onBeforeHandle("message", message, safeArg);
-            await (handler[message] as any)(safeArg);
+            await this.onClientMessageCall(handler, message, safeArg);
             return;
         } catch (e) {
             this.onClientMessageCallError(handler.socket, message, e);
@@ -369,9 +384,7 @@ export abstract class Server<N extends NeededInfo<any, any>> {
         }
         const safeArg = validation.right;
         try {
-            if (handler.onBeforeHandle)
-                await handler.onBeforeHandle("rpc", message, safeArg);
-            cb(null, await (handler[message] as any)(safeArg));
+            cb(null, await this.onClientRPCCall(handler, message, safeArg));
         } catch (e) {
             cb(await this.onClientRPCRejection(handler.socket, message, e));
         }
