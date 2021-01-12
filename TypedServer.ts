@@ -100,6 +100,11 @@ export type IClientSocketHandler<N extends NeededInfo<any, any>> = {
         N["ServerDefinition"],
         N["NamespaceSchema"]
     >;
+    onBeforeHandle?(
+        type: "message" | "rpc",
+        message: string,
+        arg: unknown,
+    ): Promise<void>;
 } & internal.ClientMessagesHandler<N["NamespaceSchema"]> &
     internal.ClientRPCsHandler<N["NamespaceSchema"]>;
 
@@ -319,6 +324,8 @@ export abstract class Server<N extends NeededInfo<any, any>> {
         }
         const safeArg = validation.right;
         try {
+            if (handler.onBeforeHandle)
+                await handler.onBeforeHandle("message", message, safeArg);
             await (handler[message] as any)(safeArg);
             return;
         } catch (e) {
@@ -362,6 +369,8 @@ export abstract class Server<N extends NeededInfo<any, any>> {
         }
         const safeArg = validation.right;
         try {
+            if (handler.onBeforeHandle)
+                await handler.onBeforeHandle("rpc", message, safeArg);
             cb(null, await (handler[message] as any)(safeArg));
         } catch (e) {
             cb(await this.onClientRPCRejection(handler.socket, message, e));
