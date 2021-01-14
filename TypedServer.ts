@@ -293,22 +293,26 @@ export abstract class Server<N extends NeededInfo<any, any>> {
     /**
      * override this method to change the behaviour of every message call
      */
-    onClientMessageCall<K extends keyof N["NamespaceSchema"]["ClientMessages"]>(
+    onClientMessageCall<
+        K extends keyof N["NamespaceSchema"]["ClientMessages"] & string
+    >(
         handler: IPartialClientSocketHandler<N>,
         message: K,
         safeArg: unknown,
-    ) {
+    ): any {
         return (handler[message] as any)(safeArg);
     }
 
     /**
      * override this method to change the behaviour of every rpc call
      */
-    onClientRPCCall<K extends keyof N["NamespaceSchema"]["ClientMessages"]>(
+    onClientRPCCall<
+        K extends keyof N["NamespaceSchema"]["ClientMessages"] & string
+    >(
         handler: IPartialClientSocketHandler<N>,
         message: K,
         safeArg: unknown,
-    ): Promise<void> {
+    ): any {
         return (handler[message] as any)(safeArg);
     }
 
