@@ -316,7 +316,7 @@ export abstract class Server<N extends NeededInfo<any, any>> {
         return (handler[message] as any)(safeArg);
     }
 
-    private async safeHandleClientMessage<
+    async safeHandleClientMessage<
         K extends keyof N["NamespaceSchema"]["ClientMessages"]
     >(
         handler: IPartialClientSocketHandler<N>,
@@ -351,7 +351,7 @@ export abstract class Server<N extends NeededInfo<any, any>> {
             this.onClientMessageCallError(handler.socket, message, e);
         }
     }
-    private async safeHandleClientRPC(
+    async safeHandleClientRPC(
         handler: IPartialClientSocketHandler<N>,
         message: keyof N["NamespaceSchema"]["ClientRPCs"],
         args: any[],
