@@ -6,7 +6,7 @@ Install via npm: [typed-socket.io](https://www.npmjs.com/package/typed-socket.io
 
 Source code on GitHub: [phiresky/typed-socket.io](https://github.com/phiresky/typed-socket.io)
 
-Note that typed events are included in [Socket.io 4.x](https://socket.io/docs/v3/migrating-from-3-x-to-4-0/#Typed-events) itself.
+**Note** that an alternative implementation of (purely compile-time) typed events are included in [Socket.io 4.x](https://socket.io/docs/v3/migrating-from-3-x-to-4-0/#Typed-events) itself.
 
 ## Basic Usage (purely compile-time)
 
